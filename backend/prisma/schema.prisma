@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model EventType {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  events Event[]
+}
+
+model Event {
+  id          String       @id @default(uuid())
+  name        String
+  eventType   EventType?   @relation(fields: [eventTypeId], references: [id])
+  eventTypeId Int?
+  size        Size?
+  isMajor     Boolean      @default(false)
+  date        DateTime?    @db.Date
+  participants Int?
+  billingDate DateTime?    @db.Date
+  payoutDate  DateTime?    @db.Date
+  review      String?
+  status      String       @default("draft")
+  createdAt   DateTime     @default(now())
+  activities  Activity[]
+  images      EventImage[]
+  investors   Investor[]
+}
+
+enum Size {
+  S
+  M
+  L
+  XL
+}
+
+model Activity {
+  id               String    @id @default(uuid())
+  event            Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId          String
+  vendorName       String?
+  vendorRole       String?
+  price            Decimal?
+  billingDate      DateTime? @db.Date
+  constructionDate DateTime? @db.Date
+  completeDate     DateTime? @db.Date
+  isPaid           Boolean   @default(false)
+}
+
+model Investor {
+  id          String    @id @default(uuid())
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String
+  name        String
+  investment  Decimal
+  returnRate  Decimal
+  billingDate DateTime? @db.Date
+  payoutDate  DateTime? @db.Date
+  isPaid      Boolean   @default(false)
+}
+
+model EventImage {
+  id         String   @id @default(uuid())
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId    String
+  r2Key      String
+  uploadedAt DateTime @default(now())
+}
+
+model ReportConfig {
+  id      String @id @default(uuid())
+  name    String
+  filters Json?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tableName String
+  recordId  String
+  action    String
+  oldData   Json?
+  newData   Json?
+  changedAt DateTime @default(now())
+  changedBy String?
+}
