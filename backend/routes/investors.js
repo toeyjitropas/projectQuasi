@@ -12,11 +12,12 @@ function enrich(inv) {
 }
 
 function parseDates(body) {
-  const { billingDate, payoutDate, ...rest } = body;
+  const { billingDate, payoutDate, paidDate, ...rest } = body;
   return {
     ...rest,
     billingDate: toDate(billingDate),
     payoutDate: toDate(payoutDate),
+    paidDate: toDate(paidDate),
   };
 }
 

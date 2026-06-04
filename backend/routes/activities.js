@@ -3,12 +3,13 @@ const prisma = require('../prisma');
 const toDate = v => (v ? new Date(v) : null);
 
 function parseDates(body) {
-  const { billingDate, constructionDate, completeDate, ...rest } = body;
+  const { billingDate, constructionDate, completeDate, paidDate, ...rest } = body;
   return {
     ...rest,
     billingDate: toDate(billingDate),
     constructionDate: toDate(constructionDate),
     completeDate: toDate(completeDate),
+    paidDate: toDate(paidDate),
   };
 }
 

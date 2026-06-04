@@ -50,6 +50,7 @@ model Activity {
   constructionDate DateTime? @db.Date
   completeDate     DateTime? @db.Date
   isPaid           Boolean   @default(false)
+  paidDate         DateTime? @db.Date
 }
 
 model Investor {
@@ -62,6 +63,7 @@ model Investor {
   billingDate DateTime? @db.Date
   payoutDate  DateTime? @db.Date
   isPaid      Boolean   @default(false)
+  paidDate    DateTime? @db.Date
 }
 
 model EventImage {

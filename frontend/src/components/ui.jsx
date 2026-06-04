@@ -30,28 +30,26 @@ export const Btn = ({ children, onClick, variant = 'primary', small, full, type 
   );
 };
 
-export const Field = ({ label, value, onChange, type = 'text', readOnly, options, rows }) => (
-  <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-    <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
-    {options ? (
-      <select value={value} onChange={onChange} style={{
-        background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--r)',
-        padding: '9px 11px', color: 'var(--text)', fontSize: 12, outline: 'none',
-      }}>
-        {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
-      </select>
-    ) : rows ? (
-      <textarea rows={rows} value={value} onChange={onChange} style={{
-        background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--r)',
-        padding: '9px 11px', color: 'var(--text)', fontSize: 12, resize: 'vertical', outline: 'none', fontFamily: 'var(--mono)',
-      }} />
-    ) : (
-      <input type={type} value={value ?? ''} onChange={onChange || (() => {})} readOnly={readOnly} style={{
-        background: readOnly ? 'var(--bg)' : 'var(--surface2)',
-        border: '1px solid var(--border)', borderRadius: 'var(--r)',
-        padding: '9px 11px', color: readOnly ? 'var(--muted)' : 'var(--text)',
-        fontSize: 12, outline: 'none', width: '100%',
-      }} />
-    )}
-  </label>
-);
+export const Field = ({ label, value, onChange, type = 'text', readOnly, options, rows, mobile }) => {
+  const pad  = mobile ? '12px 14px' : '9px 11px';
+  const fs   = mobile ? 16 : 12;
+  const base = { background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 'var(--r)', padding: pad, color: 'var(--text)', fontSize: fs, outline: 'none' };
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 7 : 5 }}>
+      <span style={{ fontSize: mobile ? 11 : 9, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      {options ? (
+        <select value={value} onChange={onChange} style={{ ...base, fontFamily: 'var(--mono)' }}>
+          {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+        </select>
+      ) : rows ? (
+        <textarea rows={rows} value={value} onChange={onChange} style={{ ...base, resize: 'vertical', fontFamily: 'var(--mono)' }} />
+      ) : (
+        <input type={type} value={value ?? ''} onChange={onChange || (() => {})} readOnly={readOnly} style={{
+          ...base, width: '100%',
+          background: readOnly ? 'var(--bg)' : 'var(--surface2)',
+          color: readOnly ? 'var(--muted)' : 'var(--text)',
+        }} />
+      )}
+    </label>
+  );
+};
