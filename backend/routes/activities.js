@@ -4,13 +4,12 @@ const toDate = v => (v ? new Date(v) : null);
 
 function parseDates(body) {
   const { billingDate, constructionDate, completeDate, paidDate, ...rest } = body;
-  return {
-    ...rest,
-    billingDate: toDate(billingDate),
-    constructionDate: toDate(constructionDate),
-    completeDate: toDate(completeDate),
-    paidDate: toDate(paidDate),
-  };
+  const result = { ...rest };
+  if ('billingDate'      in body) result.billingDate      = toDate(billingDate);
+  if ('constructionDate' in body) result.constructionDate = toDate(constructionDate);
+  if ('completeDate'     in body) result.completeDate     = toDate(completeDate);
+  if ('paidDate'         in body) result.paidDate         = toDate(paidDate);
+  return result;
 }
 
 module.exports = async function (fastify) {

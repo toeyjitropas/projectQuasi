@@ -13,12 +13,11 @@ function enrich(inv) {
 
 function parseDates(body) {
   const { billingDate, payoutDate, paidDate, ...rest } = body;
-  return {
-    ...rest,
-    billingDate: toDate(billingDate),
-    payoutDate: toDate(payoutDate),
-    paidDate: toDate(paidDate),
-  };
+  const result = { ...rest };
+  if ('billingDate' in body) result.billingDate = toDate(billingDate);
+  if ('payoutDate'  in body) result.payoutDate  = toDate(payoutDate);
+  if ('paidDate'    in body) result.paidDate    = toDate(paidDate);
+  return result;
 }
 
 module.exports = async function (fastify) {
