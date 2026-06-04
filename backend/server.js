@@ -1,11 +1,13 @@
 require('dotenv').config();
-const fastify = require('fastify')({ logger: true });
+const fastify = require('fastify')({ logger: true, bodyLimit: 20 * 1024 * 1024 });
 
 fastify.register(require('@fastify/cors'), {
   origin: '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
-fastify.register(require('@fastify/multipart'));
+fastify.register(require('@fastify/multipart'), {
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
 
 fastify.register(require('./routes/eventTypes'));
 fastify.register(require('./routes/events'));
