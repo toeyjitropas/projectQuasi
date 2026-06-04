@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { createActivity, updateActivity, deleteActivity } from '../api/activities';
 import { getEvent } from '../api/events';
+import { getVendorRoles } from '../api/config';
 import { Badge, Btn, Field } from './ui';
 
 const EMPTY = { vendorName: '', vendorRole: '', price: '', billingDate: '', constructionDate: '', completeDate: '', isPaid: false };
 
 export default function ActivityTable({ eventId, isMobile }) {
   const [activities, setActivities] = useState([]);
+  const [vendorRoles, setVendorRoles] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
 
   useEffect(() => {
     getEvent(eventId).then(ev => setActivities(ev.activities || [])).catch(() => {});
+    getVendorRoles().then(setVendorRoles).catch(() => {});
   }, [eventId]);
 
   const total = activities.reduce((s, a) => s + Number(a.price || 0), 0);
@@ -75,7 +78,9 @@ export default function ActivityTable({ eventId, isMobile }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
             <Field label="Vendor Name" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
-            <Field label="Role" value={form.vendorRole} onChange={e => setForm(f => ({ ...f, vendorRole: e.target.value }))} />
+            <Field label="Role" value={form.vendorRole}
+              options={[{ value: '', label: '— Select role —' }, ...vendorRoles.map(r => ({ value: r.name, label: r.name }))]}
+              onChange={e => setForm(f => ({ ...f, vendorRole: e.target.value }))} />
             <Field label="Price (฿)" value={form.price} type="number" onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
             <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
             <Field label="Construction Date" value={form.constructionDate} type="date" onChange={e => setForm(f => ({ ...f, constructionDate: e.target.value }))} />

@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { createInvestor, updateInvestor, deleteInvestor } from '../api/investors';
 import { getEvent } from '../api/events';
+import { getInvestorMasters } from '../api/config';
 import { Badge, Btn, Field } from './ui';
 
 const EMPTY = { name: '', investment: '', returnRate: '', billingDate: '', payoutDate: '' };
 
 export default function InvestorsTable({ eventId, isMobile }) {
   const [rows, setRows] = useState([]);
+  const [masters, setMasters] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
 
   useEffect(() => {
     getEvent(eventId).then(ev => setRows(ev.investors || [])).catch(() => {});
+    getInvestorMasters().then(setMasters).catch(() => {});
   }, [eventId]);
 
   const f = v => `฿${Number(v || 0).toLocaleString()}`;
@@ -62,6 +65,19 @@ export default function InvestorsTable({ eventId, isMobile }) {
     setRows(r => r.filter(x => x.id !== id));
   };
 
+  const handleInvestorSelect = (e) => {
+    const name = e.target.value;
+    const master = masters.find(m => m.name === name);
+    setForm(f => ({
+      ...f,
+      name,
+      ...(master && {
+        investment: master.defaultInvestment != null ? String(master.defaultInvestment) : f.investment,
+        returnRate: master.defaultReturnRate != null ? String(master.defaultReturnRate) : f.returnRate,
+      }),
+    }));
+  };
+
   const previewInv    = parseFloat(form.investment) || 0;
   const previewRate   = parseFloat(form.returnRate) || 0;
   const previewReturn = previewInv * previewRate / 100;
@@ -98,7 +114,9 @@ export default function InvestorsTable({ eventId, isMobile }) {
             {editing === 'new' ? 'ADD INVESTOR' : 'EDIT INVESTOR'}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <Field label="Investor Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <Field label="Investor Name" value={form.name}
+              options={[{ value: '', label: '— Select investor —' }, ...masters.map(m => ({ value: m.name, label: m.name }))]}
+              onChange={handleInvestorSelect} />
             <Field label="Investment Amount (฿)" value={form.investment} type="number" onChange={e => setForm(f => ({ ...f, investment: e.target.value }))} />
             <Field label="Return Rate (%)" value={form.returnRate} type="number" onChange={e => setForm(f => ({ ...f, returnRate: e.target.value }))} />
             <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

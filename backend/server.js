@@ -17,6 +17,7 @@ fastify.register(require('./routes/images'));
 fastify.register(require('./routes/reports'));
 fastify.register(require('./routes/analytics'));
 fastify.register(require('./routes/audit'));
+fastify.register(require('./routes/config'));
 
 const PORT = process.env.PORT || 3001;
 fastify.listen({ port: PORT, host: '0.0.0.0' }, err => {

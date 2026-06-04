@@ -72,6 +72,18 @@ model EventImage {
   uploadedAt DateTime @default(now())
 }
 
+model InvestorMaster {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  defaultInvestment Decimal?
+  defaultReturnRate Decimal?
+}
+
+model VendorRole {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
 model ReportConfig {
   id      String @id @default(uuid())
   name    String

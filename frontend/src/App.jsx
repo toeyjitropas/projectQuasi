@@ -5,6 +5,7 @@ import EventFormPage from './pages/EventFormPage';
 import ReportsPage from './pages/ReportsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AuditPage from './pages/AuditPage';
+import SettingsPage from './pages/SettingsPage';
 
 const NAV = [
   { id: 'calendar',  path: '/calendar',  icon: '◈', label: 'Calendar'  },
@@ -12,6 +13,7 @@ const NAV = [
   { id: 'reports',   path: '/reports',   icon: '◧', label: 'Reports'   },
   { id: 'analytics', path: '/analytics', icon: '◬', label: 'Analytics' },
   { id: 'audit',     path: '/audit',     icon: '◎', label: 'Audit'     },
+  { id: 'settings',  path: '/settings',  icon: '◐', label: 'Settings'  },
 ];
 
 const Sidebar = ({ active, onNav }) => (
@@ -84,6 +86,7 @@ export default function App() {
           <Route path="/reports" element={<ReportsPage isMobile={isMobile} />} />
           <Route path="/analytics" element={<AnalyticsPage isMobile={isMobile} />} />
           <Route path="/audit" element={<AuditPage isMobile={isMobile} />} />
+          <Route path="/settings" element={<SettingsPage isMobile={isMobile} />} />
         </Routes>
       </main>
       {isMobile && <BottomNav active={activeId} onNav={navigate} />}
