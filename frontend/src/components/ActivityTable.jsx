@@ -18,11 +18,26 @@ export default function ActivityTable({ eventId, isMobile }) {
   const unpaid = activities.filter(a => !a.isPaid).reduce((s, a) => s + Number(a.price || 0), 0);
 
   const startNew = () => { setForm(EMPTY); setEditing('new'); };
-  const startEdit = a => { setForm({ ...a, price: String(a.price || ''), billingDate: a.billingDate?.slice(0, 10) || '', constructionDate: a.constructionDate?.slice(0, 10) || '', completeDate: a.completeDate?.slice(0, 10) || '' }); setEditing(a.id); };
+  const startEdit = a => {
+    setForm({
+      ...a,
+      price: String(a.price || ''),
+      billingDate: a.billingDate?.slice(0, 10) || '',
+      constructionDate: a.constructionDate?.slice(0, 10) || '',
+      completeDate: a.completeDate?.slice(0, 10) || '',
+    });
+    setEditing(a.id);
+  };
   const cancel = () => setEditing(null);
 
   const save = async () => {
-    const payload = { ...form, price: form.price ? parseFloat(form.price) : null, billingDate: form.billingDate || null, constructionDate: form.constructionDate || null, completeDate: form.completeDate || null };
+    const payload = {
+      ...form,
+      price: form.price ? parseFloat(form.price) : null,
+      billingDate: form.billingDate || null,
+      constructionDate: form.constructionDate || null,
+      completeDate: form.completeDate || null,
+    };
     if (editing === 'new') {
       const created = await createActivity(eventId, payload);
       setActivities(a => [...a, created]);
@@ -43,26 +58,6 @@ export default function ActivityTable({ eventId, isMobile }) {
     setActivities(a => a.filter(x => x.id !== id));
   };
 
-  const InlineForm = () => (
-    <div style={{ background: 'var(--surface2)', border: '1px solid var(--amber)44', borderRadius: 10, padding: 16, marginBottom: 12 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.08em', marginBottom: 12 }}>
-        {editing === 'new' ? 'ADD VENDOR' : 'EDIT VENDOR'}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
-        <Field label="Vendor Name" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
-        <Field label="Role" value={form.vendorRole} onChange={e => setForm(f => ({ ...f, vendorRole: e.target.value }))} />
-        <Field label="Price (฿)" value={form.price} type="number" onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
-        <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
-        <Field label="Construction Date" value={form.constructionDate} type="date" onChange={e => setForm(f => ({ ...f, constructionDate: e.target.value }))} />
-        <Field label="Complete Date" value={form.completeDate} type="date" onChange={e => setForm(f => ({ ...f, completeDate: e.target.value }))} />
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Btn small onClick={save}>Save</Btn>
-        <Btn small variant="ghost" onClick={cancel}>Cancel</Btn>
-      </div>
-    </div>
-  );
-
   return (
     <div className="fu">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -73,7 +68,25 @@ export default function ActivityTable({ eventId, isMobile }) {
         {editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
       </div>
 
-      {editing && <InlineForm />}
+      {editing && (
+        <div style={{ background: 'var(--surface2)', border: '1px solid var(--amber)44', borderRadius: 10, padding: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.08em', marginBottom: 12 }}>
+            {editing === 'new' ? 'ADD VENDOR' : 'EDIT VENDOR'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <Field label="Vendor Name" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
+            <Field label="Role" value={form.vendorRole} onChange={e => setForm(f => ({ ...f, vendorRole: e.target.value }))} />
+            <Field label="Price (฿)" value={form.price} type="number" onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
+            <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
+            <Field label="Construction Date" value={form.constructionDate} type="date" onChange={e => setForm(f => ({ ...f, constructionDate: e.target.value }))} />
+            <Field label="Complete Date" value={form.completeDate} type="date" onChange={e => setForm(f => ({ ...f, completeDate: e.target.value }))} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn small onClick={save}>Save</Btn>
+            <Btn small variant="ghost" onClick={cancel}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

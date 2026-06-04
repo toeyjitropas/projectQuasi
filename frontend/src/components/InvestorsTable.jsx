@@ -3,9 +3,6 @@ import { createInvestor, updateInvestor, deleteInvestor } from '../api/investors
 import { getEvent } from '../api/events';
 import { Badge, Btn, Field } from './ui';
 
-const fmt = d => d ? new Date().toISOString().slice(0, 10) : '';
-const TODAY = new Date().toISOString().slice(0, 10);
-
 const EMPTY = { name: '', investment: '', returnRate: '', billingDate: '', payoutDate: '' };
 
 export default function InvestorsTable({ eventId, isMobile }) {
@@ -20,16 +17,31 @@ export default function InvestorsTable({ eventId, isMobile }) {
   const f = v => `฿${Number(v || 0).toLocaleString()}`;
 
   const totalInvested = rows.reduce((s, r) => s + Number(r.investment || 0), 0);
-  const totalReturn = rows.reduce((s, r) => s + Number(r.returnAmount || 0), 0);
-  const totalPayout = rows.reduce((s, r) => s + Number(r.totalPayout || 0), 0);
-  const totalUnpaid = rows.filter(r => !r.isPaid).reduce((s, r) => s + Number(r.totalPayout || 0), 0);
+  const totalReturn   = rows.reduce((s, r) => s + Number(r.returnAmount || 0), 0);
+  const totalPayout   = rows.reduce((s, r) => s + Number(r.totalPayout || 0), 0);
+  const totalUnpaid   = rows.filter(r => !r.isPaid).reduce((s, r) => s + Number(r.totalPayout || 0), 0);
 
-  const startNew = () => { setForm(EMPTY); setEditing('new'); };
-  const startEdit = r => { setForm({ name: r.name, investment: String(r.investment), returnRate: String(r.returnRate), billingDate: r.billingDate?.slice(0, 10) || '', payoutDate: r.payoutDate?.slice(0, 10) || '' }); setEditing(r.id); };
+  const startNew  = () => { setForm(EMPTY); setEditing('new'); };
+  const startEdit = r => {
+    setForm({
+      name: r.name,
+      investment: String(r.investment),
+      returnRate: String(r.returnRate),
+      billingDate: r.billingDate?.slice(0, 10) || '',
+      payoutDate: r.payoutDate?.slice(0, 10) || '',
+    });
+    setEditing(r.id);
+  };
   const cancel = () => setEditing(null);
 
   const save = async () => {
-    const payload = { name: form.name, investment: parseFloat(form.investment) || 0, returnRate: parseFloat(form.returnRate) || 0, billingDate: form.billingDate || null, payoutDate: form.payoutDate || null };
+    const payload = {
+      name: form.name,
+      investment: parseFloat(form.investment) || 0,
+      returnRate: parseFloat(form.returnRate) || 0,
+      billingDate: form.billingDate || null,
+      payoutDate: form.payoutDate || null,
+    };
     if (editing === 'new') {
       const created = await createInvestor(eventId, payload);
       setRows(r => [...r, created]);
@@ -50,54 +62,22 @@ export default function InvestorsTable({ eventId, isMobile }) {
     setRows(r => r.filter(x => x.id !== id));
   };
 
-  const previewInv = parseFloat(form.investment) || 0;
-  const previewRate = parseFloat(form.returnRate) || 0;
+  const previewInv    = parseFloat(form.investment) || 0;
+  const previewRate   = parseFloat(form.returnRate) || 0;
   const previewReturn = previewInv * previewRate / 100;
   const previewPayout = previewInv + previewReturn;
-
-  const InlineForm = () => (
-    <div style={{ background: 'var(--surface2)', border: '1px solid var(--amber)44', borderRadius: 10, padding: 16, marginBottom: 12 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.08em', marginBottom: 12 }}>
-        {editing === 'new' ? 'ADD INVESTOR' : 'EDIT INVESTOR'}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
-        <Field label="Investor Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-        <Field label="Investment Amount (฿)" value={form.investment} type="number" onChange={e => setForm(f => ({ ...f, investment: e.target.value }))} />
-        <Field label="Return Rate (%)" value={form.returnRate} type="number" onChange={e => setForm(f => ({ ...f, returnRate: e.target.value }))} />
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Payout Preview</span>
-          <div style={{ padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--r)', fontSize: 12 }}>
-            {previewInv > 0 ? (
-              <span>
-                <span style={{ color: 'var(--muted)' }}>฿{previewInv.toLocaleString()}</span>
-                <span style={{ color: 'var(--muted)' }}> + </span>
-                <span style={{ color: 'var(--green)' }}>฿{previewReturn.toLocaleString()}</span>
-                <span style={{ color: 'var(--muted)' }}> = </span>
-                <span style={{ color: 'var(--amber)', fontWeight: 700 }}>฿{previewPayout.toLocaleString()}</span>
-              </span>
-            ) : <span style={{ color: 'var(--muted)' }}>—</span>}
-          </div>
-        </label>
-        <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
-        <Field label="Payout Due Date" value={form.payoutDate} type="date" onChange={e => setForm(f => ({ ...f, payoutDate: e.target.value }))} />
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Btn small onClick={save}>Save</Btn>
-        <Btn small variant="ghost" onClick={cancel}>Cancel</Btn>
-      </div>
-    </div>
-  );
 
   const statusColor = r => r.isPaid ? 'var(--green)' : r.isOverdue ? 'var(--danger)' : 'var(--amber)';
 
   return (
     <div className="fu">
+      {/* Summary strip */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
-          { label: 'Invested', val: f(totalInvested), color: 'var(--text)' },
-          { label: 'Returns', val: '+' + f(totalReturn), color: 'var(--green)' },
-          { label: 'Total Payout', val: f(totalPayout), color: 'var(--amber)' },
-          { label: 'Unpaid', val: f(totalUnpaid), color: totalUnpaid > 0 ? 'var(--danger)' : 'var(--muted)' },
+          { label: 'Invested',     val: f(totalInvested), color: 'var(--text)'   },
+          { label: 'Returns',      val: '+' + f(totalReturn), color: 'var(--green)' },
+          { label: 'Total Payout', val: f(totalPayout),   color: 'var(--amber)'  },
+          { label: 'Unpaid',       val: f(totalUnpaid),   color: totalUnpaid > 0 ? 'var(--danger)' : 'var(--muted)' },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--surface2)', borderRadius: 8, padding: '8px 14px', border: '1px solid var(--border)', flex: isMobile ? '1 1 calc(50% - 5px)' : '0 0 auto' }}>
             <div style={{ fontSize: 9, color: 'var(--muted)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{s.label}</div>
@@ -112,7 +92,38 @@ export default function InvestorsTable({ eventId, isMobile }) {
         </div>
       )}
 
-      {editing && <InlineForm />}
+      {editing && (
+        <div style={{ background: 'var(--surface2)', border: '1px solid var(--amber)44', borderRadius: 10, padding: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.08em', marginBottom: 12 }}>
+            {editing === 'new' ? 'ADD INVESTOR' : 'EDIT INVESTOR'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <Field label="Investor Name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <Field label="Investment Amount (฿)" value={form.investment} type="number" onChange={e => setForm(f => ({ ...f, investment: e.target.value }))} />
+            <Field label="Return Rate (%)" value={form.returnRate} type="number" onChange={e => setForm(f => ({ ...f, returnRate: e.target.value }))} />
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Payout Preview</span>
+              <div style={{ padding: '9px 11px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--r)', fontSize: 12 }}>
+                {previewInv > 0 ? (
+                  <span>
+                    <span style={{ color: 'var(--muted)' }}>฿{previewInv.toLocaleString()}</span>
+                    <span style={{ color: 'var(--muted)' }}> + </span>
+                    <span style={{ color: 'var(--green)' }}>฿{previewReturn.toLocaleString()}</span>
+                    <span style={{ color: 'var(--muted)' }}> = </span>
+                    <span style={{ color: 'var(--amber)', fontWeight: 700 }}>฿{previewPayout.toLocaleString()}</span>
+                  </span>
+                ) : <span style={{ color: 'var(--muted)' }}>—</span>}
+              </div>
+            </label>
+            <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
+            <Field label="Payout Due Date" value={form.payoutDate} type="date" onChange={e => setForm(f => ({ ...f, payoutDate: e.target.value }))} />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn small onClick={save}>Save</Btn>
+            <Btn small variant="ghost" onClick={cancel}>Cancel</Btn>
+          </div>
+        </div>
+      )}
 
       {rows.length === 0 && !editing ? (
         <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--muted)', fontSize: 12 }}>No investors yet.</div>
