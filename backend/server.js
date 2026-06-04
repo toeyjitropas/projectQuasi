@@ -2,7 +2,8 @@ require('dotenv').config();
 const fastify = require('fastify')({ logger: true });
 
 fastify.register(require('@fastify/cors'), {
-  origin: process.env.FRONTEND_URL || true,
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 fastify.register(require('@fastify/multipart'));
 
