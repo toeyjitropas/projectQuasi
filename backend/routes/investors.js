@@ -1,5 +1,7 @@
 const prisma = require('../prisma');
 
+const toDate = v => (v ? new Date(v) : null);
+
 function enrich(inv) {
   const investment = Number(inv.investment);
   const returnRate = Number(inv.returnRate);
@@ -9,10 +11,19 @@ function enrich(inv) {
   return { ...inv, returnAmount, totalPayout, isOverdue };
 }
 
+function parseDates(body) {
+  const { billingDate, payoutDate, ...rest } = body;
+  return {
+    ...rest,
+    billingDate: toDate(billingDate),
+    payoutDate: toDate(payoutDate),
+  };
+}
+
 module.exports = async function (fastify) {
   fastify.post('/events/:id/investors', async (req, reply) => {
     const investor = await prisma.investor.create({
-      data: { ...req.body, eventId: req.params.id },
+      data: { ...parseDates(req.body), eventId: req.params.id },
     });
     reply.code(201).send(enrich(investor));
   });
@@ -20,7 +31,7 @@ module.exports = async function (fastify) {
   fastify.patch('/investors/:id', async (req, reply) => {
     const investor = await prisma.investor.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: parseDates(req.body),
     });
     return enrich(investor);
   });

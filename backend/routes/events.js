@@ -8,6 +8,8 @@ function deriveSize(participants) {
   return 'XL';
 }
 
+const toDate = v => (v ? new Date(v) : null);
+
 module.exports = async function (fastify) {
   fastify.get('/events', async (req) => {
     const { status } = req.query;
@@ -20,10 +22,18 @@ module.exports = async function (fastify) {
   });
 
   fastify.post('/events', async (req, reply) => {
-    const { participants, eventTypeId, ...rest } = req.body;
+    const { participants, eventTypeId, date, billingDate, payoutDate, ...rest } = req.body;
     const size = deriveSize(participants);
     const event = await prisma.event.create({
-      data: { ...rest, participants, size, eventTypeId: eventTypeId || null },
+      data: {
+        ...rest,
+        participants: participants || null,
+        size,
+        eventTypeId: eventTypeId || null,
+        date: toDate(date),
+        billingDate: toDate(billingDate),
+        payoutDate: toDate(payoutDate),
+      },
       include: { eventType: true },
     });
     reply.code(201).send(event);
@@ -48,11 +58,13 @@ module.exports = async function (fastify) {
   });
 
   fastify.patch('/events/:id', async (req, reply) => {
-    const { participants, eventTypeId, ...rest } = req.body;
-    const size = participants !== undefined ? deriveSize(participants) : undefined;
+    const { participants, eventTypeId, date, billingDate, payoutDate, ...rest } = req.body;
     const data = { ...rest };
-    if (participants !== undefined) { data.participants = participants; data.size = size; }
+    if (participants !== undefined) { data.participants = participants || null; data.size = deriveSize(participants); }
     if (eventTypeId !== undefined) data.eventTypeId = eventTypeId || null;
+    if (date !== undefined) data.date = toDate(date);
+    if (billingDate !== undefined) data.billingDate = toDate(billingDate);
+    if (payoutDate !== undefined) data.payoutDate = toDate(payoutDate);
     const event = await prisma.event.update({
       where: { id: req.params.id },
       data,

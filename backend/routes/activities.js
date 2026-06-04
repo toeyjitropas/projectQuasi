@@ -1,9 +1,21 @@
 const prisma = require('../prisma');
 
+const toDate = v => (v ? new Date(v) : null);
+
+function parseDates(body) {
+  const { billingDate, constructionDate, completeDate, ...rest } = body;
+  return {
+    ...rest,
+    billingDate: toDate(billingDate),
+    constructionDate: toDate(constructionDate),
+    completeDate: toDate(completeDate),
+  };
+}
+
 module.exports = async function (fastify) {
   fastify.post('/events/:id/activities', async (req, reply) => {
     const activity = await prisma.activity.create({
-      data: { ...req.body, eventId: req.params.id },
+      data: { ...parseDates(req.body), eventId: req.params.id },
     });
     reply.code(201).send(activity);
   });
@@ -11,7 +23,7 @@ module.exports = async function (fastify) {
   fastify.patch('/activities/:id', async (req, reply) => {
     const activity = await prisma.activity.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: parseDates(req.body),
     });
     return activity;
   });
