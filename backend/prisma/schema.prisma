@@ -84,6 +84,12 @@ model VendorRole {
   name String @unique
 }
 
+model Vendor {
+  id    String   @id @default(uuid())
+  name  String   @unique
+  roles String[]
+}
+
 model ReportConfig {
   id      String @id @default(uuid())
   name    String

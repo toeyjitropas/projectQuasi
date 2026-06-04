@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { createActivity, updateActivity, deleteActivity } from '../api/activities';
 import { getEvent } from '../api/events';
-import { getVendorRoles } from '../api/config';
+import { getVendors } from '../api/config';
 import { Badge, Btn, Field } from './ui';
 
 const EMPTY = { vendorName: '', vendorRole: '', price: '', billingDate: '', constructionDate: '', completeDate: '', isPaid: false };
 
 export default function ActivityTable({ eventId, isMobile }) {
   const [activities, setActivities] = useState([]);
-  const [vendorRoles, setVendorRoles] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
 
   useEffect(() => {
     getEvent(eventId).then(ev => setActivities(ev.activities || [])).catch(() => {});
-    getVendorRoles().then(setVendorRoles).catch(() => {});
+    getVendors().then(setVendors).catch(() => {});
   }, [eventId]);
 
   const total = activities.reduce((s, a) => s + Number(a.price || 0), 0);
@@ -76,16 +76,26 @@ export default function ActivityTable({ eventId, isMobile }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.08em', marginBottom: 12 }}>
             {editing === 'new' ? 'ADD VENDOR' : 'EDIT VENDOR'}
           </div>
+          {(() => {
+            const selectedVendor = vendors.find(v => v.name === form.vendorName);
+            const roleOpts = selectedVendor?.roles?.length
+              ? [{ value: '', label: '— Select role —' }, ...selectedVendor.roles.map(r => ({ value: r, label: r }))]
+              : [{ value: '', label: vendors.length ? '— Select vendor first —' : '— No vendors set up —' }];
+            return (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <Field label="Vendor Name" value={form.vendorName} onChange={e => setForm(f => ({ ...f, vendorName: e.target.value }))} />
-            <Field label="Role" value={form.vendorRole}
-              options={[{ value: '', label: '— Select role —' }, ...vendorRoles.map(r => ({ value: r.name, label: r.name }))]}
+            <Field label="Vendor Name"
+              options={[{ value: '', label: '— Select vendor —' }, ...vendors.map(v => ({ value: v.name, label: v.name }))]}
+              value={form.vendorName}
+              onChange={e => setForm(f => ({ ...f, vendorName: e.target.value, vendorRole: '' }))} />
+            <Field label="Role" value={form.vendorRole} options={roleOpts}
               onChange={e => setForm(f => ({ ...f, vendorRole: e.target.value }))} />
             <Field label="Price (฿)" value={form.price} type="number" onChange={e => setForm(f => ({ ...f, price: e.target.value }))} />
             <Field label="Billing Date" value={form.billingDate} type="date" onChange={e => setForm(f => ({ ...f, billingDate: e.target.value }))} />
             <Field label="Construction Date" value={form.constructionDate} type="date" onChange={e => setForm(f => ({ ...f, constructionDate: e.target.value }))} />
             <Field label="Complete Date" value={form.completeDate} type="date" onChange={e => setForm(f => ({ ...f, completeDate: e.target.value }))} />
           </div>
+            );
+          })()}
           <div style={{ display: 'flex', gap: 8 }}>
             <Btn small onClick={save}>Save</Btn>
             <Btn small variant="ghost" onClick={cancel}>Cancel</Btn>

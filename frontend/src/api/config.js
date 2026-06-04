@@ -5,6 +5,11 @@ export const createEventType   = (data) => client.post('/event-types', data).the
 export const updateEventType   = (id, data) => client.patch(`/event-types/${id}`, data).then(r => r.data);
 export const deleteEventType   = (id) => client.delete(`/event-types/${id}`);
 
+export const getVendors        = () => client.get('/vendors').then(r => r.data);
+export const createVendor      = (data) => client.post('/vendors', data).then(r => r.data);
+export const updateVendor      = (id, data) => client.patch(`/vendors/${id}`, data).then(r => r.data);
+export const deleteVendor      = (id) => client.delete(`/vendors/${id}`);
+
 export const getVendorRoles    = () => client.get('/vendor-roles').then(r => r.data);
 export const createVendorRole  = (data) => client.post('/vendor-roles', data).then(r => r.data);
 export const updateVendorRole  = (id, data) => client.patch(`/vendor-roles/${id}`, data).then(r => r.data);

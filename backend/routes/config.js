@@ -43,6 +43,27 @@ module.exports = async function (fastify) {
     reply.code(204).send();
   });
 
+  // ── Vendors ──────────────────────────────────────────────────────────
+  fastify.get('/vendors', async () => {
+    return prisma.vendor.findMany({ orderBy: { name: 'asc' } });
+  });
+
+  fastify.post('/vendors', async (req, reply) => {
+    const { name, roles } = req.body;
+    const v = await prisma.vendor.create({ data: { name, roles: roles || [] } });
+    reply.code(201).send(v);
+  });
+
+  fastify.patch('/vendors/:id', async (req) => {
+    const { name, roles } = req.body;
+    return prisma.vendor.update({ where: { id: req.params.id }, data: { name, roles: roles || [] } });
+  });
+
+  fastify.delete('/vendors/:id', async (req, reply) => {
+    await prisma.vendor.delete({ where: { id: req.params.id } });
+    reply.code(204).send();
+  });
+
   // ── Investor Master ───────────────────────────────────────────────────
   fastify.get('/investor-masters', async () => {
     return prisma.investorMaster.findMany({ orderBy: { name: 'asc' } });
