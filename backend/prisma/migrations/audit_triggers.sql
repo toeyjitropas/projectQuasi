@@ -20,7 +20,7 @@ BEGIN
   END IF;
 
   INSERT INTO "AuditLog" ("id", "tableName", "recordId", "action", "oldData", "newData", "changedAt", "changedBy")
-  VALUES (gen_random_uuid()::TEXT, TG_TABLE_NAME, record_id, TG_OP, old_data, new_data, NOW(), current_user);
+  VALUES (gen_random_uuid()::TEXT, TG_TABLE_NAME, record_id, TG_OP, old_data, new_data, NOW(), COALESCE(current_setting('app.current_user', true), ''));
 
   IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
 END;

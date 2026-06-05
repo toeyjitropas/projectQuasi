@@ -6,6 +6,7 @@ import ActivityTable from '../components/ActivityTable';
 import InvestorsTable from '../components/InvestorsTable';
 import ImageUploader from '../components/ImageUploader';
 import client from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 const EVENT_TYPES = ['Conference','Workshop','Corporate Dinner','Team Building','Exhibition','Other'];
 
@@ -44,6 +45,7 @@ const EventCard = ({ ev, onClick }) => (
 
 function EventsList({ isMobile }) {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [events, setEvents] = useState([]);
   const [filter, setFilter] = useState('all');
 
@@ -58,7 +60,7 @@ function EventsList({ isMobile }) {
           <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 700 }}>Events</div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{events.length} total</div>
         </div>
-        <Btn small onClick={() => navigate('/events/new')}>+ New</Btn>
+        {isAdmin && <Btn small onClick={() => navigate('/events/new')}>+ New</Btn>}
       </div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {['all','confirmed','draft','completed'].map(f => (
@@ -112,6 +114,7 @@ function EventsList({ isMobile }) {
 
 function EventDetail({ id, isMobile }) {
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const isNew = id === 'new';
   const [ev, setEv] = useState(null);
   const [tab, setTab] = useState('details');
@@ -224,9 +227,9 @@ function EventDetail({ id, isMobile }) {
           </div>
           <Field label="Review" value={form.review} rows={isMobile ? 3 : 4} onChange={e => setForm(f => ({ ...f, review: e.target.value }))} />
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-            <Btn onClick={save} full={isMobile}>{saving ? 'Saving…' : 'Save Changes'}</Btn>
+            {isAdmin && <Btn onClick={save} full={isMobile}>{saving ? 'Saving…' : 'Save Changes'}</Btn>}
             {!isMobile && <Btn variant="ghost" onClick={() => navigate('/events')}>Cancel</Btn>}
-            {!isNew && <Btn variant="danger" onClick={handleDelete}>Delete</Btn>}
+            {isAdmin && !isNew && <Btn variant="danger" onClick={handleDelete}>Delete</Btn>}
           </div>
         </div>
       )}

@@ -3,10 +3,12 @@ import { createInvestor, updateInvestor, deleteInvestor } from '../api/investors
 import { getEvent } from '../api/events';
 import { getInvestorMasters } from '../api/config';
 import { Badge, Btn, Field } from './ui';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { name: '', investment: '', returnRate: '', billingDate: '', payoutDate: '', paidDate: '' };
 
 export default function InvestorsTable({ eventId, isMobile }) {
+  const { isAdmin } = useAuth();
   const [rows, setRows] = useState([]);
   const [masters, setMasters] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -149,7 +151,7 @@ export default function InvestorsTable({ eventId, isMobile }) {
         ))}
       </div>
 
-      {editing !== 'new' && (
+      {isAdmin && editing !== 'new' && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
           <Btn small onClick={startNew}>+ Add Investor</Btn>
         </div>
@@ -172,7 +174,7 @@ export default function InvestorsTable({ eventId, isMobile }) {
                     {r.isOverdue && <span style={{ fontSize: 9, color: 'var(--danger)', fontWeight: 700 }}>OVERDUE</span>}
                   </div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', flexShrink: 0 }}>
-                    <input type="checkbox" checked={r.isPaid} onChange={() => togglePaid(r)} style={{ accentColor: 'var(--green)', width: 16, height: 16 }} />
+                    <input type="checkbox" checked={r.isPaid} onChange={isAdmin ? () => togglePaid(r) : undefined} style={{ accentColor: 'var(--green)', width: 16, height: 16, opacity: isAdmin ? 1 : 0.5, cursor: isAdmin ? 'pointer' : 'default' }} />
                     <span style={{ fontSize: 10, fontWeight: 700, color: r.isPaid ? 'var(--green)' : 'var(--danger)' }}>{r.isPaid ? 'PAID' : 'UNPAID'}</span>
                   </label>
                 </div>
@@ -193,10 +195,10 @@ export default function InvestorsTable({ eventId, isMobile }) {
                 {r.paidDate && (
                   <div style={{ fontSize: 10, color: 'var(--green)', marginBottom: 8 }}>Paid on: {r.paidDate.slice(0, 10)}</div>
                 )}
-                <div style={{ display: 'flex', gap: 6 }}>
+                {isAdmin && <div style={{ display: 'flex', gap: 6 }}>
                   <Btn small variant="ghost" onClick={() => startEdit(r)}>Edit</Btn>
                   <Btn small variant="danger" onClick={() => remove(r.id)}>Delete</Btn>
-                </div>
+                </div>}
               </div>
             )
           ))}
@@ -227,13 +229,13 @@ export default function InvestorsTable({ eventId, isMobile }) {
                     <td style={{ padding: '10px 12px', fontSize: 11, color: r.isOverdue ? 'var(--danger)' : 'var(--muted)', fontWeight: r.isOverdue ? 700 : 400 }}>{r.payoutDate?.slice(0, 10) || '—'}</td>
                     <td style={{ padding: '10px 12px', fontSize: 11, color: r.paidDate ? 'var(--green)' : 'var(--muted)' }}>{r.paidDate?.slice(0, 10) || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
-                      <input type="checkbox" checked={r.isPaid} onChange={() => togglePaid(r)} style={{ accentColor: 'var(--green)', width: 15, height: 15, cursor: 'pointer' }} />
+                      <input type="checkbox" checked={r.isPaid} onChange={isAdmin ? () => togglePaid(r) : undefined} style={{ accentColor: 'var(--green)', width: 15, height: 15, opacity: isAdmin ? 1 : 0.5, cursor: isAdmin ? 'pointer' : 'default' }} />
                     </td>
                     <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      {isAdmin && <div style={{ display: 'flex', gap: 6 }}>
                         <Btn small variant="ghost" onClick={() => startEdit(r)}>Edit</Btn>
                         <Btn small variant="danger" onClick={() => remove(r.id)}>Del</Btn>
-                      </div>
+                      </div>}
                     </td>
                   </tr>
                 )

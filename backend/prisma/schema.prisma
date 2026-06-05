@@ -27,6 +27,9 @@ model Event {
   review      String?
   status      String       @default("draft")
   createdAt   DateTime     @default(now())
+  createdBy   String?
+  updatedBy   String?
+  updatedAt   DateTime?    @updatedAt
   activities  Activity[]
   images      EventImage[]
   investors   Investor[]
@@ -37,6 +40,11 @@ enum Size {
   M
   L
   XL
+}
+
+enum Role {
+  ADMIN
+  VIEWER
 }
 
 model Activity {
@@ -96,6 +104,14 @@ model ReportConfig {
   id      String @id @default(uuid())
   name    String
   filters Json?
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(VIEWER)
+  createdAt    DateTime @default(now())
 }
 
 model AuditLog {

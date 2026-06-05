@@ -1,4 +1,4 @@
-const prisma = require('../prisma');
+const { prisma, withUserContext } = require('../prisma');
 
 const toDate = v => (v ? new Date(v) : null);
 
@@ -21,23 +21,27 @@ function parseDates(body) {
 }
 
 module.exports = async function (fastify) {
-  fastify.post('/events/:id/investors', async (req, reply) => {
-    const investor = await prisma.investor.create({
-      data: { ...parseDates(req.body), eventId: req.params.id },
-    });
+  const AUTH  = { onRequest: [fastify.authenticate] };
+  const ADMIN = { onRequest: [fastify.requireAdmin] };
+
+  fastify.post('/events/:id/investors', ADMIN, async (req, reply) => {
+    const investor = await withUserContext(req.user.email, tx =>
+      tx.investor.create({ data: { ...parseDates(req.body), eventId: req.params.id } })
+    );
     reply.code(201).send(enrich(investor));
   });
 
-  fastify.patch('/investors/:id', async (req, reply) => {
-    const investor = await prisma.investor.update({
-      where: { id: req.params.id },
-      data: parseDates(req.body),
-    });
+  fastify.patch('/investors/:id', ADMIN, async (req, reply) => {
+    const investor = await withUserContext(req.user.email, tx =>
+      tx.investor.update({ where: { id: req.params.id }, data: parseDates(req.body) })
+    );
     return enrich(investor);
   });
 
-  fastify.delete('/investors/:id', async (req, reply) => {
-    await prisma.investor.delete({ where: { id: req.params.id } });
+  fastify.delete('/investors/:id', ADMIN, async (req, reply) => {
+    await withUserContext(req.user.email, tx =>
+      tx.investor.delete({ where: { id: req.params.id } })
+    );
     reply.code(204).send();
   });
 };

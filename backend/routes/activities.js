@@ -1,4 +1,4 @@
-const prisma = require('../prisma');
+const { prisma, withUserContext } = require('../prisma');
 
 const toDate = v => (v ? new Date(v) : null);
 
@@ -13,23 +13,27 @@ function parseDates(body) {
 }
 
 module.exports = async function (fastify) {
-  fastify.post('/events/:id/activities', async (req, reply) => {
-    const activity = await prisma.activity.create({
-      data: { ...parseDates(req.body), eventId: req.params.id },
-    });
+  const AUTH  = { onRequest: [fastify.authenticate] };
+  const ADMIN = { onRequest: [fastify.requireAdmin] };
+
+  fastify.post('/events/:id/activities', ADMIN, async (req, reply) => {
+    const activity = await withUserContext(req.user.email, tx =>
+      tx.activity.create({ data: { ...parseDates(req.body), eventId: req.params.id } })
+    );
     reply.code(201).send(activity);
   });
 
-  fastify.patch('/activities/:id', async (req, reply) => {
-    const activity = await prisma.activity.update({
-      where: { id: req.params.id },
-      data: parseDates(req.body),
-    });
+  fastify.patch('/activities/:id', ADMIN, async (req, reply) => {
+    const activity = await withUserContext(req.user.email, tx =>
+      tx.activity.update({ where: { id: req.params.id }, data: parseDates(req.body) })
+    );
     return activity;
   });
 
-  fastify.delete('/activities/:id', async (req, reply) => {
-    await prisma.activity.delete({ where: { id: req.params.id } });
+  fastify.delete('/activities/:id', ADMIN, async (req, reply) => {
+    await withUserContext(req.user.email, tx =>
+      tx.activity.delete({ where: { id: req.params.id } })
+    );
     reply.code(204).send();
   });
 };

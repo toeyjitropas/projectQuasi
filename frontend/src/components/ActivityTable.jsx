@@ -3,10 +3,12 @@ import { createActivity, updateActivity, deleteActivity } from '../api/activitie
 import { getEvent } from '../api/events';
 import { getVendors } from '../api/config';
 import { Badge, Btn, Field } from './ui';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY = { vendorName: '', vendorRole: '', price: '', billingDate: '', constructionDate: '', completeDate: '', isPaid: false, paidDate: '' };
 
 export default function ActivityTable({ eventId, isMobile }) {
+  const { isAdmin } = useAuth();
   const [activities, setActivities] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -109,7 +111,7 @@ export default function ActivityTable({ eventId, isMobile }) {
           Total: <span style={{ color: 'var(--amber)', fontWeight: 700 }}>฿{total.toLocaleString()}</span>
           {unpaid > 0 && <span style={{ marginLeft: 12, color: 'var(--danger)' }}>Unpaid: ฿{unpaid.toLocaleString()}</span>}
         </div>
-        {editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
+        {isAdmin && editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
       </div>
 
       {editing === 'new' && formContent}
@@ -126,7 +128,7 @@ export default function ActivityTable({ eventId, isMobile }) {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 700, color: 'var(--amber)', fontSize: 14 }}>฿{Number(a.price || 0).toLocaleString()}</div>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, cursor: 'pointer', justifyContent: 'flex-end' }}>
-                    <input type="checkbox" checked={a.isPaid} onChange={() => togglePaid(a)} style={{ accentColor: 'var(--green)', width: 16, height: 16 }} />
+                    <input type="checkbox" checked={a.isPaid} onChange={isAdmin ? () => togglePaid(a) : undefined} style={{ accentColor: 'var(--green)', width: 16, height: 16, opacity: isAdmin ? 1 : 0.5, cursor: isAdmin ? 'pointer' : 'default' }} />
                     <span style={{ fontSize: 10, color: a.isPaid ? 'var(--green)' : 'var(--danger)', fontWeight: 600 }}>{a.isPaid ? 'PAID' : 'UNPAID'}</span>
                   </label>
                 </div>
@@ -136,10 +138,10 @@ export default function ActivityTable({ eventId, isMobile }) {
                 <span>Done: {a.completeDate?.slice(0, 10) || '—'}</span>
                 {a.paidDate && <span style={{ color: 'var(--green)' }}>Paid on: {a.paidDate.slice(0, 10)}</span>}
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              {isAdmin && <div style={{ display: 'flex', gap: 6 }}>
                 <Btn small variant="ghost" onClick={() => startEdit(a)}>Edit</Btn>
                 <Btn small variant="danger" onClick={() => remove(a.id)}>Delete</Btn>
-              </div>
+              </div>}
             </div>
           ))}
           {activities.filter(a => a.id === editing && editing !== 'new').map(() => formContent)}
@@ -166,14 +168,14 @@ export default function ActivityTable({ eventId, isMobile }) {
                     <td style={{ padding: '10px 12px', color: 'var(--muted)', fontSize: 11 }}>{a.completeDate?.slice(0, 10) || '—'}</td>
                     <td style={{ padding: '10px 12px', fontSize: 11, color: a.paidDate ? 'var(--green)' : 'var(--muted)' }}>{a.paidDate?.slice(0, 10) || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
-                      <input type="checkbox" checked={a.isPaid} onChange={() => togglePaid(a)} style={{ accentColor: 'var(--green)', width: 15, height: 15, cursor: 'pointer' }} />
+                      <input type="checkbox" checked={a.isPaid} onChange={isAdmin ? () => togglePaid(a) : undefined} style={{ accentColor: 'var(--green)', width: 15, height: 15, opacity: isAdmin ? 1 : 0.5, cursor: isAdmin ? 'pointer' : 'default' }} />
                     </td>
-                    <td style={{ padding: '10px 12px' }}>
+                    {isAdmin && <td style={{ padding: '10px 12px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <Btn small variant="ghost" onClick={() => startEdit(a)}>Edit</Btn>
                         <Btn small variant="danger" onClick={() => remove(a.id)}>Del</Btn>
                       </div>
-                    </td>
+                    </td>}
                   </tr>
                 )
               ))}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Btn, Field } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 import {
   getEventTypes, createEventType, updateEventType, deleteEventType,
   getVendorRoles, createVendorRole, updateVendorRole, deleteVendorRole,
@@ -7,7 +8,7 @@ import {
   getInvestorMasters, createInvestorMaster, updateInvestorMaster, deleteInvestorMaster,
 } from '../api/config';
 
-function MasterList({ title, items, onAdd, onEdit, onDelete, fields }) {
+function MasterList({ title, items, onAdd, onEdit, onDelete, fields, isAdmin }) {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
 
@@ -41,7 +42,7 @@ function MasterList({ title, items, onAdd, onEdit, onDelete, fields }) {
     <div style={{ marginBottom: 32 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div>
-        {editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
+        {isAdmin && editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
       </div>
 
       {editing === 'new' && formContent}
@@ -64,10 +65,10 @@ function MasterList({ title, items, onAdd, onEdit, onDelete, fields }) {
                     </span>
                   ))}
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                {isAdmin && <div style={{ display: 'flex', gap: 6 }}>
                   <Btn small variant="ghost" onClick={() => startEdit(item)}>Edit</Btn>
                   <Btn small variant="danger" onClick={() => onDelete(item.id)}>Del</Btn>
-                </div>
+                </div>}
               </div>
             )}
           </div>
@@ -77,7 +78,7 @@ function MasterList({ title, items, onAdd, onEdit, onDelete, fields }) {
   );
 }
 
-function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete }) {
+function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete, isAdmin }) {
   const [editing, setEditing] = useState(null);
   const [name, setName] = useState('');
   const [selectedRoles, setSelectedRoles] = useState([]);
@@ -136,7 +137,7 @@ function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete }) {
     <div style={{ marginBottom: 32 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 700 }}>Vendor List</div>
-        {editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
+        {isAdmin && editing !== 'new' && <Btn small onClick={startNew}>+ Add</Btn>}
       </div>
 
       {editing === 'new' && formContent}
@@ -162,10 +163,10 @@ function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete }) {
                     }
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                {isAdmin && <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 12 }}>
                   <Btn small variant="ghost" onClick={() => startEdit(item)}>Edit</Btn>
                   <Btn small variant="danger" onClick={() => onDelete(item.id)}>Del</Btn>
-                </div>
+                </div>}
               </div>
             )}
           </div>
@@ -176,6 +177,7 @@ function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete }) {
 }
 
 export default function SettingsPage({ isMobile }) {
+  const { isAdmin } = useAuth();
   const [tab, setTab] = useState('vendors');
   const [eventTypes, setEventTypes]       = useState([]);
   const [vendorRoles, setVendorRoles]     = useState([]);
@@ -209,6 +211,7 @@ export default function SettingsPage({ isMobile }) {
 
       {tab === 'vendors' && (
         <VendorList
+          isAdmin={isAdmin}
           items={vendors}
           vendorRoles={vendorRoles}
           onAdd={async data => { const r = await createVendor(data); setVendors(v => [...v, r]); }}
@@ -219,6 +222,7 @@ export default function SettingsPage({ isMobile }) {
 
       {tab === 'vendorroles' && (
         <MasterList
+          isAdmin={isAdmin}
           title="Vendor Role List"
           items={vendorRoles}
           fields={[{ key: 'name', label: 'Role Name' }]}
@@ -230,6 +234,7 @@ export default function SettingsPage({ isMobile }) {
 
       {tab === 'investors' && (
         <MasterList
+          isAdmin={isAdmin}
           title="Investor Master List"
           items={investorMasters}
           fields={[
@@ -245,6 +250,7 @@ export default function SettingsPage({ isMobile }) {
 
       {tab === 'eventtypes' && (
         <MasterList
+          isAdmin={isAdmin}
           title="Event Type List"
           items={eventTypes}
           fields={[{ key: 'name', label: 'Event Type Name' }]}

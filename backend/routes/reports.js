@@ -1,7 +1,9 @@
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 module.exports = async function (fastify) {
-  fastify.get('/reports/event-summary', async (req) => {
+  const AUTH = { onRequest: [fastify.authenticate] };
+
+  fastify.get('/reports/event-summary', AUTH, async (req) => {
     const { from, to, type, size, isMajor } = req.query;
     const where = {};
     if (from || to) {
@@ -25,7 +27,7 @@ module.exports = async function (fastify) {
     }));
   });
 
-  fastify.get('/reports/payout-summary', async () => {
+  fastify.get('/reports/payout-summary', AUTH, async () => {
     const rows = await prisma.$queryRaw`
       SELECT
         TO_CHAR(e."payoutDate", 'YYYY-MM') AS month,
@@ -42,7 +44,7 @@ module.exports = async function (fastify) {
     return rows;
   });
 
-  fastify.get('/reports/vendor-billing', async (req) => {
+  fastify.get('/reports/vendor-billing', AUTH, async (req) => {
     const { mode, year, month, date } = req.query;
 
     if (mode === 'date' && date) {
@@ -67,7 +69,7 @@ module.exports = async function (fastify) {
     return rows;
   });
 
-  fastify.get('/reports/investors', async (req) => {
+  fastify.get('/reports/investors', AUTH, async (req) => {
     const { name, status } = req.query;
     const today = new Date();
 

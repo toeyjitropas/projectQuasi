@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { trainModel, predictCost } from '../api/analytics';
 import client from '../api/client';
 import { Btn, Field } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 
 const VENDOR_ROLES = ['AV & Sound','Decoration','F&B','Lighting','Photography','Security'];
 
 export default function AnalyticsPage({ isMobile }) {
+  const { isAdmin } = useAuth();
   const [eventTypes, setEventTypes] = useState([]);
   const [form, setForm] = useState({ event_type: 'Conference', participants: 100, is_major: false, activity_count: 4 });
   const [vendorRoles, setVendorRoles] = useState(['AV & Sound','F&B']);
@@ -68,7 +70,7 @@ export default function AnalyticsPage({ isMobile }) {
             <div style={{ fontSize: 10, color: 'var(--muted)' }}>Gradient Boosting Regressor · 5-fold CV</div>
           </div>
         </div>
-        <Btn small variant="success" onClick={handleTrain}>{training ? <span><span className="spin">◌</span> Training…</span> : '↻ Retrain'}</Btn>
+        {isAdmin && <Btn small variant="success" onClick={handleTrain}>{training ? <span><span className="spin">◌</span> Training…</span> : '↻ Retrain'}</Btn>}
       </div>
 
       <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', padding: isMobile ? 16 : 22, marginBottom: 16 }}>

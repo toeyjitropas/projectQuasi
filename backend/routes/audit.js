@@ -1,7 +1,9 @@
-const prisma = require('../prisma');
+const { prisma } = require('../prisma');
 
 module.exports = async function (fastify) {
-  fastify.get('/audit', async (req) => {
+  const AUTH = { onRequest: [fastify.authenticate] };
+
+  fastify.get('/audit', AUTH, async (req) => {
     const { table, recordId, from, to } = req.query;
     const where = {};
     if (table) where.tableName = table;

@@ -6,6 +6,8 @@ import ReportsPage from './pages/ReportsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AuditPage from './pages/AuditPage';
 import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import { useAuth } from './context/AuthContext';
 
 const NAV = [
   { id: 'calendar',  path: '/calendar',  icon: '◈', label: 'Calendar'  },
@@ -16,7 +18,17 @@ const NAV = [
   { id: 'settings',  path: '/settings',  icon: '◐', label: 'Settings'  },
 ];
 
-const Sidebar = ({ active, onNav }) => (
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return (
+    <div style={{ height: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 12, background: 'var(--bg)' }}>…</div>
+  );
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  return children;
+}
+
+const Sidebar = ({ active, onNav, user, onLogout }) => (
   <aside style={{ width: 200, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '20px 0', flexShrink: 0 }}>
     <div style={{ padding: '0 18px 24px' }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--amber)', letterSpacing: '-0.02em' }}>EVENT</div>
@@ -40,7 +52,11 @@ const Sidebar = ({ active, onNav }) => (
     </nav>
     <div style={{ marginTop: 'auto', padding: '14px 18px', borderTop: '1px solid var(--border)' }}>
       <div style={{ fontSize: 9, color: 'var(--muted)', letterSpacing: '0.06em' }}>LOGGED IN AS</div>
-      <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2 }}>Admin</div>
+      <div style={{ fontSize: 12, fontWeight: 600, marginTop: 2, wordBreak: 'break-all' }}>{user?.email}</div>
+      <div style={{ fontSize: 9, color: 'var(--amber)', fontWeight: 700, marginTop: 2, letterSpacing: '0.06em' }}>{user?.role}</div>
+      <button onClick={onLogout} style={{ marginTop: 10, fontSize: 10, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--mono)' }}>
+        Sign out →
+      </button>
     </div>
   </aside>
 );
@@ -62,6 +78,7 @@ const BottomNav = ({ active, onNav }) => (
 
 export default function App() {
   const [isMobile, setMobile] = useState(window.innerWidth <= 768);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -74,22 +91,29 @@ export default function App() {
   const activeId = NAV.find(n => location.pathname.startsWith(n.path))?.id || 'calendar';
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>
-      {!isMobile && <Sidebar active={activeId} onNav={navigate} />}
-      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: isMobile ? 'var(--nav-h)' : 0 }}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/calendar" replace />} />
-          <Route path="/calendar" element={<CalendarPage isMobile={isMobile} />} />
-          <Route path="/events" element={<EventFormPage isMobile={isMobile} listMode />} />
-          <Route path="/events/new" element={<EventFormPage isMobile={isMobile} />} />
-          <Route path="/events/:id" element={<EventFormPage isMobile={isMobile} />} />
-          <Route path="/reports" element={<ReportsPage isMobile={isMobile} />} />
-          <Route path="/analytics" element={<AnalyticsPage isMobile={isMobile} />} />
-          <Route path="/audit" element={<AuditPage isMobile={isMobile} />} />
-          <Route path="/settings" element={<SettingsPage isMobile={isMobile} />} />
-        </Routes>
-      </main>
-      {isMobile && <BottomNav active={activeId} onNav={navigate} />}
-    </div>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden' }}>
+            {!isMobile && <Sidebar active={activeId} onNav={navigate} user={user} onLogout={logout} />}
+            <main style={{ flex: 1, overflowY: 'auto', paddingBottom: isMobile ? 'var(--nav-h)' : 0 }}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/calendar" replace />} />
+                <Route path="/calendar" element={<CalendarPage isMobile={isMobile} />} />
+                <Route path="/events" element={<EventFormPage isMobile={isMobile} listMode />} />
+                <Route path="/events/new" element={<EventFormPage isMobile={isMobile} />} />
+                <Route path="/events/:id" element={<EventFormPage isMobile={isMobile} />} />
+                <Route path="/reports" element={<ReportsPage isMobile={isMobile} />} />
+                <Route path="/analytics" element={<AnalyticsPage isMobile={isMobile} />} />
+                <Route path="/audit" element={<AuditPage isMobile={isMobile} />} />
+                <Route path="/settings" element={<SettingsPage isMobile={isMobile} />} />
+              </Routes>
+            </main>
+            {isMobile && <BottomNav active={activeId} onNav={navigate} />}
+          </div>
+        </ProtectedRoute>
+      } />
+    </Routes>
   );
 }

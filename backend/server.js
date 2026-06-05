@@ -8,7 +8,30 @@ fastify.register(require('@fastify/cors'), {
 fastify.register(require('@fastify/multipart'), {
   limits: { fileSize: 20 * 1024 * 1024 },
 });
+fastify.register(require('@fastify/jwt'), {
+  secret: process.env.JWT_SECRET,
+});
 
+fastify.decorate('authenticate', async function (request, reply) {
+  try {
+    await request.jwtVerify();
+  } catch {
+    reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
+
+fastify.decorate('requireAdmin', async function (request, reply) {
+  try {
+    await request.jwtVerify();
+    if (request.user.role !== 'ADMIN') {
+      return reply.code(403).send({ error: 'Forbidden' });
+    }
+  } catch {
+    reply.code(401).send({ error: 'Unauthorized' });
+  }
+});
+
+fastify.register(require('./routes/auth'));
 fastify.register(require('./routes/eventTypes'));
 fastify.register(require('./routes/events'));
 fastify.register(require('./routes/activities'));
