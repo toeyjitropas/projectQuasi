@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Btn, Field } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { getUsers, createUser, deleteUser } from '../api/auth';
 import {
   getEventTypes, createEventType, updateEventType, deleteEventType,
   getVendorRoles, createVendorRole, updateVendorRole, deleteVendorRole,
@@ -176,8 +177,76 @@ function VendorList({ items, vendorRoles, onAdd, onEdit, onDelete, isAdmin }) {
   );
 }
 
+function UserList({ currentUser }) {
+  const [users, setUsers] = useState([]);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ email: '', password: '', role: 'VIEWER' });
+  const [error, setError] = useState('');
+
+  useEffect(() => { getUsers().then(setUsers).catch(() => {}); }, []);
+
+  const save = async () => {
+    setError('');
+    try {
+      const created = await createUser(form.email, form.password, form.role);
+      setUsers(u => [...u, created]);
+      setAdding(false);
+      setForm({ email: '', password: '', role: 'VIEWER' });
+    } catch {
+      setError('Failed to create user. Email may already exist.');
+    }
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm('Delete this user?')) return;
+    await deleteUser(id);
+    setUsers(u => u.filter(x => x.id !== id));
+  };
+
+  const roleColor = r => r === 'ADMIN' ? 'var(--amber)' : '#4a9edd';
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>User Accounts</div>
+        {!adding && <Btn small onClick={() => setAdding(true)}>+ Add User</Btn>}
+      </div>
+
+      {adding && (
+        <div style={{ background: 'var(--surface2)', border: '1px solid var(--amber)44', borderRadius: 10, padding: 16, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <Field label="Email" value={form.email} type="email" onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+            <Field label="Password" value={form.password} type="password" onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+            <Field label="Role" value={form.role} options={['VIEWER', 'ADMIN']} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} />
+          </div>
+          {error && <div style={{ color: 'var(--danger)', fontSize: 11, marginBottom: 10 }}>{error}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn small onClick={save}>Create</Btn>
+            <Btn small variant="ghost" onClick={() => { setAdding(false); setError(''); }}>Cancel</Btn>
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
+        {users.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>No users.</div>}
+        {users.map((u, i) => (
+          <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{u.email}</div>
+              <div style={{ fontSize: 10, marginTop: 3, color: roleColor(u.role), fontWeight: 700, letterSpacing: '0.06em' }}>{u.role}</div>
+            </div>
+            {u.id !== currentUser?.id && (
+              <Btn small variant="danger" onClick={() => remove(u.id)}>Del</Btn>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage({ isMobile }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [tab, setTab] = useState('vendors');
   const [eventTypes, setEventTypes]       = useState([]);
   const [vendorRoles, setVendorRoles]     = useState([]);
@@ -199,7 +268,7 @@ export default function SettingsPage({ isMobile }) {
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 24, overflowX: 'auto', paddingBottom: 4 }}>
-        {[['vendors','Vendors'],['vendorroles','Vendor Roles'],['investors','Investors'],['eventtypes','Event Types']].map(([id, label]) => (
+        {[['vendors','Vendors'],['vendorroles','Vendor Roles'],['investors','Investors'],['eventtypes','Event Types'], ...(isAdmin ? [['users','Users']] : [])].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding: '5px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
             fontSize: 11, fontWeight: 600,
@@ -259,6 +328,8 @@ export default function SettingsPage({ isMobile }) {
           onDelete={async id => { await deleteEventType(id); setEventTypes(v => v.filter(x => x.id !== id)); }}
         />
       )}
+
+      {tab === 'users' && isAdmin && <UserList currentUser={user} />}
     </div>
   );
 }
