@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Btn, Field } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
-import { getUsers, createUser, deleteUser } from '../api/auth';
+import { getUsers, createUser, deleteUser, resetUserPassword, changeMyPassword } from '../api/auth';
 import {
   getEventTypes, createEventType, updateEventType, deleteEventType,
   getVendorRoles, createVendorRole, updateVendorRole, deleteVendorRole,
@@ -182,6 +182,9 @@ function UserList({ currentUser }) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', role: 'VIEWER' });
   const [error, setError] = useState('');
+  const [resetting, setResetting] = useState(null);
+  const [newPw, setNewPw] = useState('');
+  const [pwError, setPwError] = useState('');
 
   useEffect(() => { getUsers().then(setUsers).catch(() => {}); }, []);
 
@@ -201,6 +204,17 @@ function UserList({ currentUser }) {
     if (!window.confirm('Delete this user?')) return;
     await deleteUser(id);
     setUsers(u => u.filter(x => x.id !== id));
+  };
+
+  const saveReset = async () => {
+    setPwError('');
+    try {
+      await resetUserPassword(resetting, newPw);
+      setResetting(null);
+      setNewPw('');
+    } catch (e) {
+      setPwError(e.response?.data?.error || 'Failed to reset password.');
+    }
   };
 
   const roleColor = r => r === 'ADMIN' ? 'var(--amber)' : '#4a9edd';
@@ -230,16 +244,67 @@ function UserList({ currentUser }) {
       <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
         {users.length === 0 && <div style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>No users.</div>}
         {users.map((u, i) => (
-          <div key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none' }}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{u.email}</div>
-              <div style={{ fontSize: 10, marginTop: 3, color: roleColor(u.role), fontWeight: 700, letterSpacing: '0.06em' }}>{u.role}</div>
+          <div key={u.id} style={{ borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{u.email}</div>
+                <div style={{ fontSize: 10, marginTop: 3, color: roleColor(u.role), fontWeight: 700, letterSpacing: '0.06em' }}>{u.role}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <Btn small variant="ghost" onClick={() => { setResetting(resetting === u.id ? null : u.id); setNewPw(''); setPwError(''); }}>
+                  {resetting === u.id ? 'Cancel' : 'Reset PW'}
+                </Btn>
+                {u.id !== currentUser?.id && <Btn small variant="danger" onClick={() => remove(u.id)}>Del</Btn>}
+              </div>
             </div>
-            {u.id !== currentUser?.id && (
-              <Btn small variant="danger" onClick={() => remove(u.id)}>Del</Btn>
+            {resetting === u.id && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                  <div style={{ flex: 1 }}>
+                    <Field label="New Password" value={newPw} type="password" onChange={e => setNewPw(e.target.value)} />
+                  </div>
+                  <Btn small onClick={saveReset}>Save</Btn>
+                </div>
+                {pwError && <div style={{ color: 'var(--danger)', fontSize: 11, marginTop: 6 }}>{pwError}</div>}
+              </div>
             )}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ChangeMyPassword() {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const save = async () => {
+    setError(''); setSuccess(false);
+    if (form.newPassword !== form.confirmPassword) return setError('New passwords do not match.');
+    if (form.newPassword.length < 6) return setError('New password must be at least 6 characters.');
+    try {
+      await changeMyPassword(form.currentPassword, form.newPassword);
+      setSuccess(true);
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to change password.');
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Change My Password</div>
+      <div style={{ background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', padding: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 12 }}>
+          <Field label="Current Password" value={form.currentPassword} type="password" onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))} />
+          <Field label="New Password" value={form.newPassword} type="password" onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))} />
+          <Field label="Confirm New Password" value={form.confirmPassword} type="password" onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))} />
+        </div>
+        {error && <div style={{ color: 'var(--danger)', fontSize: 11, marginBottom: 10 }}>{error}</div>}
+        {success && <div style={{ color: 'var(--green)', fontSize: 11, marginBottom: 10 }}>Password changed successfully.</div>}
+        <Btn small onClick={save}>Update Password</Btn>
       </div>
     </div>
   );
@@ -330,6 +395,10 @@ export default function SettingsPage({ isMobile }) {
       )}
 
       {tab === 'users' && isAdmin && <UserList currentUser={user} />}
+
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 24, marginTop: 8 }}>
+        <ChangeMyPassword />
+      </div>
     </div>
   );
 }

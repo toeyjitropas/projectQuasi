@@ -53,4 +53,26 @@ module.exports = async function (fastify) {
     await prisma.user.delete({ where: { id: req.params.id } });
     reply.code(204).send();
   });
+
+  fastify.patch('/auth/users/:id/password', { onRequest: [fastify.requireAdmin] }, async (req, reply) => {
+    const { password } = req.body || {};
+    if (!password || password.length < 6) return reply.code(400).send({ error: 'Password must be at least 6 characters' });
+    const passwordHash = await bcrypt.hash(password, 12);
+    await prisma.user.update({ where: { id: req.params.id }, data: { passwordHash } });
+    reply.code(204).send();
+  });
+
+  fastify.patch('/auth/me/password', { onRequest: [fastify.authenticate] }, async (req, reply) => {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) return reply.code(400).send({ error: 'Both fields required' });
+    if (newPassword.length < 6) return reply.code(400).send({ error: 'New password must be at least 6 characters' });
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) return reply.code(401).send({ error: 'Current password is incorrect' });
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({ where: { id: req.user.sub }, data: { passwordHash } });
+    reply.code(204).send();
+  });
 };
